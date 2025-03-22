@@ -407,6 +407,19 @@
         }];
 
         try {
+            console.log('Starting new conversation with session ID:', currentSessionId);
+            
+            // Show the chat interface first to provide immediate feedback
+            chatContainer.querySelector('.brand-header').style.display = 'none';
+            chatContainer.querySelector('.new-conversation').style.display = 'none';
+            chatInterface.classList.add('active');
+            
+            // Display a loading message
+            const loadingMessageDiv = document.createElement('div');
+            loadingMessageDiv.className = 'chat-message bot';
+            loadingMessageDiv.textContent = 'Loading...';
+            messagesContainer.appendChild(loadingMessageDiv);
+            
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: {
@@ -415,25 +428,46 @@
                 body: JSON.stringify(data)
             });
 
-            const responseData = await response.json();
-            chatContainer.querySelector('.brand-header').style.display = 'none';
-            chatContainer.querySelector('.new-conversation').style.display = 'none';
-            chatInterface.classList.add('active');
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
 
+            const responseData = await response.json();
+            console.log('Received response:', responseData);
+            
+            // Replace loading message with actual response
+            messagesContainer.removeChild(loadingMessageDiv);
+            
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(responseData) ? responseData[0].output : responseData.output;
+            botMessageDiv.textContent = Array.isArray(responseData) && responseData.length > 0 && responseData[0].output ? 
+                responseData[0].output : 
+                (responseData.output || 'Hi there! How can I help you today?');
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error starting conversation:', error);
+            
+            // Ensure UI still transitions even if there's an error
+            if (!chatInterface.classList.contains('active')) {
+                chatContainer.querySelector('.brand-header').style.display = 'none';
+                chatContainer.querySelector('.new-conversation').style.display = 'none';
+                chatInterface.classList.add('active');
+            }
+            
+            // Show fallback message
+            const errorMessageDiv = document.createElement('div');
+            errorMessageDiv.className = 'chat-message bot';
+            errorMessageDiv.textContent = 'Sorry, I had trouble connecting. How can I help you today?';
+            messagesContainer.appendChild(errorMessageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     }
 
     async function sendMessage(message) {
         const messageData = {
             action: "sendMessage",
-            sessionId: currentSessionId,
+            sessionId: currentSessionId || generateUUID(), // Ensure we have a session ID
             route: config.webhook.route,
             chatInput: message,
             metadata: {
@@ -448,6 +482,14 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
+            console.log('Sending message:', messageData);
+            
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-message bot';
+            typingDiv.textContent = '...';
+            messagesContainer.appendChild(typingDiv);
+            
             const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: {
@@ -456,15 +498,38 @@
                 body: JSON.stringify(messageData)
             });
             
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            
             const data = await response.json();
+            console.log('Received response:', data);
+            
+            // Remove typing indicator
+            messagesContainer.removeChild(typingDiv);
             
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(data) ? data[0].output : data.output;
+            botMessageDiv.textContent = Array.isArray(data) && data.length > 0 && data[0].output ? 
+                data[0].output : 
+                (data.output || 'I received your message.');
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error sending message:', error);
+            
+            // Remove typing indicator if it exists
+            const typingIndicator = messagesContainer.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                messagesContainer.removeChild(typingIndicator);
+            }
+            
+            // Show error message
+            const errorMessageDiv = document.createElement('div');
+            errorMessageDiv.className = 'chat-message bot';
+            errorMessageDiv.textContent = 'Sorry, I had trouble responding. Please try again.';
+            messagesContainer.appendChild(errorMessageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     }
 
