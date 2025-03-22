@@ -288,7 +288,8 @@
     const defaultConfig = {
         webhook: {
             url: '',
-            route: ''
+            route: '',
+            corsProxy: '' // Add this line for CORS proxy option
         },
         branding: {
             logo: '',
@@ -420,11 +421,20 @@
             loadingMessageDiv.textContent = 'Loading...';
             messagesContainer.appendChild(loadingMessageDiv);
             
-            const response = await fetch(config.webhook.url, {
+            // Use the CORS proxy if provided
+            const fetchUrl = config.webhook.corsProxy ? 
+                `${config.webhook.corsProxy}${encodeURIComponent(config.webhook.url)}` : 
+                config.webhook.url;
+                
+            console.log('Fetching from:', fetchUrl);
+            
+            const response = await fetch(fetchUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                mode: 'cors', // Add explicit CORS mode
+                credentials: 'include', // Include credentials
                 body: JSON.stringify(data)
             });
 
@@ -490,11 +500,18 @@
             typingDiv.textContent = '...';
             messagesContainer.appendChild(typingDiv);
             
-            const response = await fetch(config.webhook.url, {
+            // Use the CORS proxy if provided
+            const fetchUrl = config.webhook.corsProxy ? 
+                `${config.webhook.corsProxy}${encodeURIComponent(config.webhook.url)}` : 
+                config.webhook.url;
+                
+            const response = await fetch(fetchUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                mode: 'cors', // Add explicit CORS mode
+                credentials: 'include', // Include credentials
                 body: JSON.stringify(messageData)
             });
             
