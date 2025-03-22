@@ -448,11 +448,44 @@
             // Replace loading message with actual response
             messagesContainer.removeChild(loadingMessageDiv);
             
+            // More robust response data handling
+            let messageText = 'Hi there! How can I help you today?'; // Default fallback
+            
+            // Try to extract the message from various possible response formats
+            if (responseData) {
+                if (Array.isArray(responseData) && responseData.length > 0) {
+                    // Format: [{output: "message"}]
+                    if (responseData[0].output) {
+                        messageText = responseData[0].output;
+                    }
+                } else if (typeof responseData === 'object') {
+                    // Format: {output: "message"}
+                    if (responseData.output) {
+                        messageText = responseData.output;
+                    } else if (responseData.text) {
+                        // Format: {text: "message"}
+                        messageText = responseData.text;
+                    } else if (responseData.message) {
+                        // Format: {message: "message"}
+                        messageText = responseData.message;
+                    } else if (responseData.content) {
+                        // Format: {content: "message"}
+                        messageText = responseData.content;
+                    }
+                } else if (typeof responseData === 'string') {
+                    // Format: "message"
+                    messageText = responseData;
+                }
+            }
+            
+            // Ensure we're not displaying an empty message
+            if (!messageText || messageText.trim() === '') {
+                messageText = 'Hi there! How can I help you today?';
+            }
+            
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(responseData) && responseData.length > 0 && responseData[0].output ? 
-                responseData[0].output : 
-                (responseData.output || 'Hi there! How can I help you today?');
+            botMessageDiv.textContent = messageText;
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
@@ -525,11 +558,44 @@
             // Remove typing indicator
             messagesContainer.removeChild(typingDiv);
             
+            // More robust response data handling - similar to startNewConversation
+            let messageText = 'I received your message.'; // Default fallback
+            
+            // Try to extract the message from various possible response formats
+            if (data) {
+                if (Array.isArray(data) && data.length > 0) {
+                    // Format: [{output: "message"}]
+                    if (data[0].output) {
+                        messageText = data[0].output;
+                    }
+                } else if (typeof data === 'object') {
+                    // Format: {output: "message"}
+                    if (data.output) {
+                        messageText = data.output;
+                    } else if (data.text) {
+                        // Format: {text: "message"}
+                        messageText = data.text;
+                    } else if (data.message) {
+                        // Format: {message: "message"} 
+                        messageText = data.message;
+                    } else if (data.content) {
+                        // Format: {content: "message"}
+                        messageText = data.content;
+                    }
+                } else if (typeof data === 'string') {
+                    // Format: "message"
+                    messageText = data;
+                }
+            }
+            
+            // Ensure we're not displaying an empty message
+            if (!messageText || messageText.trim() === '') {
+                messageText = 'I received your message.';
+            }
+            
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = Array.isArray(data) && data.length > 0 && data[0].output ? 
-                data[0].output : 
-                (data.output || 'I received your message.');
+            botMessageDiv.textContent = messageText;
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
