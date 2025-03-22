@@ -288,8 +288,7 @@
     const defaultConfig = {
         webhook: {
             url: '',
-            route: '',
-            corsProxy: '' // Add this line for CORS proxy option
+            route: ''
         },
         branding: {
             logo: '',
@@ -408,109 +407,33 @@
         }];
 
         try {
-            console.log('Starting new conversation with session ID:', currentSessionId);
-            
-            // Show the chat interface first to provide immediate feedback
-            chatContainer.querySelector('.brand-header').style.display = 'none';
-            chatContainer.querySelector('.new-conversation').style.display = 'none';
-            chatInterface.classList.add('active');
-            
-            // Display a loading message
-            const loadingMessageDiv = document.createElement('div');
-            loadingMessageDiv.className = 'chat-message bot';
-            loadingMessageDiv.textContent = 'Loading...';
-            messagesContainer.appendChild(loadingMessageDiv);
-            
-            // Use the CORS proxy if provided
-            const fetchUrl = config.webhook.corsProxy ? 
-                `${config.webhook.corsProxy}${encodeURIComponent(config.webhook.url)}` : 
-                config.webhook.url;
-                
-            console.log('Fetching from:', fetchUrl);
-            
-            const response = await fetch(fetchUrl, {
+            const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                mode: 'cors', // Add explicit CORS mode
-                credentials: 'include', // Include credentials
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) {
-                throw new Error(`Server responded with status: ${response.status}`);
-            }
-
             const responseData = await response.json();
-            console.log('Received response:', responseData);
-            
-            // Replace loading message with actual response
-            messagesContainer.removeChild(loadingMessageDiv);
-            
-            // More robust response data handling
-            let messageText = 'Hi there! How can I help you today?'; // Default fallback
-            
-            // Try to extract the message from various possible response formats
-            if (responseData) {
-                if (Array.isArray(responseData) && responseData.length > 0) {
-                    // Format: [{output: "message"}]
-                    if (responseData[0].output) {
-                        messageText = responseData[0].output;
-                    }
-                } else if (typeof responseData === 'object') {
-                    // Format: {output: "message"}
-                    if (responseData.output) {
-                        messageText = responseData.output;
-                    } else if (responseData.text) {
-                        // Format: {text: "message"}
-                        messageText = responseData.text;
-                    } else if (responseData.message) {
-                        // Format: {message: "message"}
-                        messageText = responseData.message;
-                    } else if (responseData.content) {
-                        // Format: {content: "message"}
-                        messageText = responseData.content;
-                    }
-                } else if (typeof responseData === 'string') {
-                    // Format: "message"
-                    messageText = responseData;
-                }
-            }
-            
-            // Ensure we're not displaying an empty message
-            if (!messageText || messageText.trim() === '') {
-                messageText = 'Hi there! How can I help you today?';
-            }
-            
+            chatContainer.querySelector('.brand-header').style.display = 'none';
+            chatContainer.querySelector('.new-conversation').style.display = 'none';
+            chatInterface.classList.add('active');
+
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = messageText;
+            botMessageDiv.textContent = Array.isArray(responseData) ? responseData[0].output : responseData.output;
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
-            console.error('Error starting conversation:', error);
-            
-            // Ensure UI still transitions even if there's an error
-            if (!chatInterface.classList.contains('active')) {
-                chatContainer.querySelector('.brand-header').style.display = 'none';
-                chatContainer.querySelector('.new-conversation').style.display = 'none';
-                chatInterface.classList.add('active');
-            }
-            
-            // Show fallback message
-            const errorMessageDiv = document.createElement('div');
-            errorMessageDiv.className = 'chat-message bot';
-            errorMessageDiv.textContent = 'Sorry, I had trouble connecting. How can I help you today?';
-            messagesContainer.appendChild(errorMessageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            console.error('Error:', error);
         }
     }
 
     async function sendMessage(message) {
         const messageData = {
             action: "sendMessage",
-            sessionId: currentSessionId || generateUUID(), // Ensure we have a session ID
+            sessionId: currentSessionId,
             route: config.webhook.route,
             chatInput: message,
             metadata: {
@@ -525,94 +448,23 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
-            console.log('Sending message:', messageData);
-            
-            // Show typing indicator
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'chat-message bot';
-            typingDiv.textContent = '...';
-            messagesContainer.appendChild(typingDiv);
-            
-            // Use the CORS proxy if provided
-            const fetchUrl = config.webhook.corsProxy ? 
-                `${config.webhook.corsProxy}${encodeURIComponent(config.webhook.url)}` : 
-                config.webhook.url;
-                
-            const response = await fetch(fetchUrl, {
+            const response = await fetch(config.webhook.url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                mode: 'cors', // Add explicit CORS mode
-                credentials: 'include', // Include credentials
                 body: JSON.stringify(messageData)
             });
             
-            if (!response.ok) {
-                throw new Error(`Server responded with status: ${response.status}`);
-            }
-            
             const data = await response.json();
-            console.log('Received response:', data);
-            
-            // Remove typing indicator
-            messagesContainer.removeChild(typingDiv);
-            
-            // More robust response data handling - similar to startNewConversation
-            let messageText = 'I received your message.'; // Default fallback
-            
-            // Try to extract the message from various possible response formats
-            if (data) {
-                if (Array.isArray(data) && data.length > 0) {
-                    // Format: [{output: "message"}]
-                    if (data[0].output) {
-                        messageText = data[0].output;
-                    }
-                } else if (typeof data === 'object') {
-                    // Format: {output: "message"}
-                    if (data.output) {
-                        messageText = data.output;
-                    } else if (data.text) {
-                        // Format: {text: "message"}
-                        messageText = data.text;
-                    } else if (data.message) {
-                        // Format: {message: "message"} 
-                        messageText = data.message;
-                    } else if (data.content) {
-                        // Format: {content: "message"}
-                        messageText = data.content;
-                    }
-                } else if (typeof data === 'string') {
-                    // Format: "message"
-                    messageText = data;
-                }
-            }
-            
-            // Ensure we're not displaying an empty message
-            if (!messageText || messageText.trim() === '') {
-                messageText = 'I received your message.';
-            }
             
             const botMessageDiv = document.createElement('div');
             botMessageDiv.className = 'chat-message bot';
-            botMessageDiv.textContent = messageText;
+            botMessageDiv.textContent = Array.isArray(data) ? data[0].output : data.output;
             messagesContainer.appendChild(botMessageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
-            console.error('Error sending message:', error);
-            
-            // Remove typing indicator if it exists
-            const typingIndicator = messagesContainer.querySelector('.typing-indicator');
-            if (typingIndicator) {
-                messagesContainer.removeChild(typingIndicator);
-            }
-            
-            // Show error message
-            const errorMessageDiv = document.createElement('div');
-            errorMessageDiv.className = 'chat-message bot';
-            errorMessageDiv.textContent = 'Sorry, I had trouble responding. Please try again.';
-            messagesContainer.appendChild(errorMessageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            console.error('Error:', error);
         }
     }
 
