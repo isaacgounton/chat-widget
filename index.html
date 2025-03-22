@@ -12,9 +12,8 @@
     <script>
     window.ChatWidgetConfig = {
         webhook: {
-            url: 'https://goodbytes.app.n8n.cloud/webhook/f406671e-c954-4691-b39a-66c90aa2f103/chat',
-            route: 'general',
-            corsProxy: 'https://corsproxy.io/?' // Add this line for CORS proxy
+            url: 'https://corsproxy.io/?https://goodbytes.app.n8n.cloud/webhook/f406671e-c954-4691-b39a-66c90aa2f103/chat',
+            route: 'general'
         },
         branding: {
             logo: 'https://www.etugrand.com/logo.png',
@@ -32,6 +31,6 @@
     };
 </script>
 <!-- Choose only one script tag to avoid loading the script twice -->
-<script src="https://cdn.jsdelivr.net/gh/wayneSimpson/n8n-chatbot-template@ba944c3/chat-widget.js"></script>
+<script src="chat-widget.js"></script>
 </body>
 </html>
