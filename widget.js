@@ -100,68 +100,10 @@
             color: var(--chat--color-header-text);
         }
 
-        .n8n-chat-widget .new-conversation {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            text-align: center;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .n8n-chat-widget .welcome-text {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--chat--color-font);
-            margin-bottom: 24px;
-            line-height: 1.3;
-        }
-
-        .n8n-chat-widget .new-chat-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, var(--chat--color-primary) 0%, var(--chat--color-secondary) 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.3s;
-            font-weight: 500;
-            font-family: inherit;
-            margin-bottom: 12px;
-        }
-
-        .n8n-chat-widget .new-chat-btn:hover {
-            transform: scale(1.02);
-        }
-
-        .n8n-chat-widget .message-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        .n8n-chat-widget .response-text {
-            font-size: 14px;
-            color: var(--chat--color-font);
-            opacity: 0.7;
-            margin: 0;
-        }
-
         .n8n-chat-widget .chat-interface {
-            display: none;
+            display: flex;
             flex-direction: column;
             height: 100%;
-        }
-
-        .n8n-chat-widget .chat-interface.active {
-            display: flex;
         }
 
         .n8n-chat-widget .chat-messages {
